@@ -503,33 +503,27 @@ build-number check.
 ### `ERROR: tkinter is not available` — app exits immediately on macOS with Homebrew Python
 
 **Cause:** Homebrew intentionally splits Tcl/Tk support into a separate package
-(`python-tk@3.12`). Installing only `python@3.12` gives you a Python interpreter
-with no GUI toolkit.
+(`python-tk@<python-version>`). Installing only `python@<python-version>` gives
+you a Python interpreter with no GUI toolkit.
 
-**Fix — install the missing Homebrew package** (one command):
+**Fix — if it still fails, use this verified recovery sequence**:
 
 ```
-brew install python-tk@3.12
-```
+# 1. Install Tkinter for Python 3.14
+brew install python-tk@3.14
 
-Then recreate your virtual environment so it picks up the newly installed
-Tcl/Tk:
-
-Apple Silicon Mac (M1/M2/M3/M4):
-```
-cd ~/path/to/PN_Artwork_Restorer
+# 2. Deactivate and delete the old venv
+deactivate
 rm -rf .venv
-/opt/homebrew/bin/python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
 
-Intel Mac:
-```
-cd ~/path/to/PN_Artwork_Restorer
-rm -rf .venv
-/usr/local/bin/python3 -m venv .venv
+# 3. Create a fresh venv (it will now include tkinter)
+/opt/homebrew/opt/python@3.14/libexec/bin/python -m venv .venv
+
+# 4. Activate it
 source .venv/bin/activate
+
+# 5. Install requirements again
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
