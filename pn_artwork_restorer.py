@@ -181,6 +181,7 @@ class ArtworkRestorer:
         no_backup = 0
         no_artwork = 0
         errors = 0
+        restored_files: list[Path] = []
 
         for idx, lib_path in enumerate(library_files, start=1):
             self._progress_cb(idx, total)
@@ -188,7 +189,6 @@ class ArtworkRestorer:
             key = lib_path.name.lower()
             if key not in backup_dict:
                 no_backup += 1
-                self._log_cb(f"No backup: {lib_path.name}", "debug")
                 continue
 
             backup_path = backup_dict[key]
@@ -196,7 +196,7 @@ class ArtworkRestorer:
 
             if success:
                 matched += 1
-                self._log_cb(f"{msg} → {lib_path}", "info")
+                restored_files.append(lib_path)
             else:
                 if "no embedded artwork" in msg.lower():
                     no_artwork += 1
@@ -206,6 +206,20 @@ class ArtworkRestorer:
                 else:
                     errors += 1
                     self._log_cb(f"ERROR: {msg} | file: {lib_path}", "error")
+
+        if restored_files:
+            heading = (
+                "Files that would be restored:"
+                if self.dry_run
+                else "Files restored:"
+            )
+            self._log_cb(heading, "info")
+            for restored in restored_files:
+                try:
+                    display_path = restored.relative_to(self.library_root)
+                except ValueError:
+                    display_path = restored
+                self._log_cb(f"  - {display_path}", "info")
 
         separator = "=" * 60
         self._log_cb(
@@ -495,7 +509,7 @@ def _setup_logging() -> None:
     """Configure root-level logging to both a file and stdout."""
     log_path = _log_file()
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
         handlers=[
             logging.FileHandler(log_path, encoding="utf-8"),

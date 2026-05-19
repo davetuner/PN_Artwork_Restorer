@@ -336,3 +336,44 @@ class TestRun:
 
         assert summary["matched"] == 1
         assert picture_count(target) == 1
+
+    def test_logs_fixed_file_list_and_suppresses_no_backup_debug(
+        self, tmp_library, tmp_backup
+    ):
+        make_flac(tmp_library / "matched.flac", with_picture=False)
+        make_flac(tmp_library / "unmatched.flac", with_picture=False)
+        make_flac(tmp_backup / "matched.flac", with_picture=True)
+
+        logs = []
+        restorer = ArtworkRestorer(
+            tmp_library,
+            tmp_backup,
+            dry_run=False,
+            log_callback=lambda msg, level="info": logs.append((level, msg)),
+        )
+        summary = restorer.run()
+
+        assert summary["matched"] == 1
+        assert summary["no_backup"] == 1
+        assert not any(level == "debug" for level, _ in logs)
+        combined = "\n".join(msg for _, msg in logs)
+        assert "Files restored:" in combined
+        assert "  - matched.flac" in combined
+
+    def test_duplicate_library_filenames_all_restored(self, tmp_library, tmp_backup):
+        """
+        If two library files share the same filename in different folders, both
+        should be restored from a single matching backup file.
+        """
+        (tmp_library / "A").mkdir()
+        (tmp_library / "B").mkdir()
+        target_a = make_flac(tmp_library / "A" / "dup.flac", with_picture=False)
+        target_b = make_flac(tmp_library / "B" / "dup.flac", with_picture=False)
+        make_flac(tmp_backup / "dup.flac", with_picture=True)
+
+        restorer, _ = _make_restorer(tmp_library, tmp_backup, dry_run=False)
+        summary = restorer.run()
+
+        assert summary["matched"] == 2
+        assert picture_count(target_a) == 1
+        assert picture_count(target_b) == 1
