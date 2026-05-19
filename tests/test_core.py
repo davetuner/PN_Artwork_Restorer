@@ -247,6 +247,7 @@ class TestRun:
         assert summary["matched"] == 1
         assert summary["no_backup"] == 1
         assert summary["no_artwork_in_backup"] == 1
+        assert summary["duplicate_backups"] == 0
         assert summary["errors"] == 0
 
     def test_empty_library_returns_zero_summary(self, tmp_library, tmp_backup):
@@ -257,6 +258,7 @@ class TestRun:
             "matched": 0,
             "no_backup": 0,
             "no_artwork_in_backup": 0,
+            "duplicate_backups": 0,
             "errors": 0,
         }
 
@@ -359,6 +361,7 @@ class TestRun:
         combined = "\n".join(msg for _, msg in logs)
         assert "Files restored:" in combined
         assert "  - matched.flac" in combined
+        assert "Duplicate backups    : 0" in combined
 
     def test_duplicate_library_filenames_all_restored(self, tmp_library, tmp_backup):
         """
@@ -377,3 +380,21 @@ class TestRun:
         assert summary["matched"] == 2
         assert picture_count(target_a) == 1
         assert picture_count(target_b) == 1
+
+    def test_summary_reports_duplicate_backup_count(self, tmp_library, tmp_backup):
+        make_flac(tmp_library / "song.flac", with_picture=False)
+        make_flac(tmp_backup / "song.flac", with_picture=True)
+        make_flac(tmp_backup / "Song.flac", with_picture=True)
+
+        logs = []
+        restorer = ArtworkRestorer(
+            tmp_library,
+            tmp_backup,
+            dry_run=False,
+            log_callback=lambda msg, level="info": logs.append((level, msg)),
+        )
+        summary = restorer.run()
+
+        assert summary["duplicate_backups"] == 1
+        combined = "\n".join(msg for _, msg in logs)
+        assert "Duplicate backups    : 1" in combined

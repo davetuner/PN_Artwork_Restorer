@@ -162,7 +162,7 @@ class ArtworkRestorer:
 
         Returns a summary ``dict`` with keys:
         ``total``, ``matched``, ``no_backup``, ``no_artwork_in_backup``,
-        ``errors``.
+        ``errors``, ``duplicate_backups``.
         """
         self._log_cb("Building backup index…", "info")
         backup_dict, duplicates = self.build_backup_dict()
@@ -229,6 +229,7 @@ class ArtworkRestorer:
             f"  Artwork restored     : {matched}\n"
             f"  No backup found      : {no_backup}\n"
             f"  Backup has no art    : {no_artwork}\n"
+            f"  Duplicate backups    : {len(duplicates)}\n"
             f"  Errors               : {errors}\n"
             f"{separator}",
             "info",
@@ -239,6 +240,7 @@ class ArtworkRestorer:
             "matched": matched,
             "no_backup": no_backup,
             "no_artwork_in_backup": no_artwork,
+            "duplicate_backups": len(duplicates),
             "errors": errors,
         }
 
@@ -455,6 +457,7 @@ if HAS_TKINTER:
                 f"Artwork restored     : {summary['matched']}\n"
                 f"No backup found      : {summary['no_backup']}\n"
                 f"Backup has no art    : {summary['no_artwork_in_backup']}\n"
+                f"Duplicate backups    : {summary['duplicate_backups']}\n"
                 f"Errors               : {summary['errors']}\n\n"
                 f"Full log: {_log_file()}",
             )
