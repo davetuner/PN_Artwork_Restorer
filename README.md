@@ -84,10 +84,13 @@ Terminal, or press **⌘ Space** and type `terminal`).
    Follow the on-screen prompts (it may ask for your Mac login password).  
    *(You can skip this step if you already have Homebrew — test with `brew --version`.)*
 
-2. Install Python:
+2. Install Python and its Tcl/Tk GUI bindings:
    ```
-   brew install python@3.12
+   brew install python@3.12 python-tk@3.12
    ```
+   > `python-tk@3.12` is required — Homebrew splits the GUI bindings into a
+   > separate package and without it the app will fail to start with
+   > `ERROR: tkinter is not available`.
 
 3. Verify:
    ```
@@ -460,10 +463,12 @@ handling in our script can prevent it.
    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
    ```
 
-2. Install Python via Homebrew:
+2. Install Python and its Tcl/Tk GUI bindings via Homebrew:
    ```
-   brew install python@3.12
+   brew install python@3.12 python-tk@3.12
    ```
+   > `python-tk@3.12` is a **separate** Homebrew package — without it you get
+   > `ERROR: tkinter is not available` even though Python itself works fine.
 
 3. Delete your old virtual environment and recreate it with Homebrew's Python:
 
@@ -492,6 +497,46 @@ handling in our script can prevent it.
 
 The crash will not occur again because Homebrew's Tcl/Tk does not include the
 build-number check.
+
+---
+
+### `ERROR: tkinter is not available` — app exits immediately on macOS with Homebrew Python
+
+**Cause:** Homebrew intentionally splits Tcl/Tk support into a separate package
+(`python-tk@3.12`). Installing only `python@3.12` gives you a Python interpreter
+with no GUI toolkit.
+
+**Fix — install the missing Homebrew package** (one command):
+
+```
+brew install python-tk@3.12
+```
+
+Then recreate your virtual environment so it picks up the newly installed
+Tcl/Tk:
+
+Apple Silicon Mac (M1/M2/M3/M4):
+```
+cd ~/path/to/PN_Artwork_Restorer
+rm -rf .venv
+/opt/homebrew/bin/python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Intel Mac:
+```
+cd ~/path/to/PN_Artwork_Restorer
+rm -rf .venv
+/usr/local/bin/python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Then launch the app:
+```
+python3 pn_artwork_restorer.py
+```
 
 ---
 

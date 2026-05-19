@@ -491,8 +491,11 @@ def main() -> None:  # pragma: no cover
     if not HAS_TKINTER:
         print(
             "ERROR: tkinter is not available.\n"
-            "On Linux install it with:  sudo apt install python3-tk\n"
-            "On macOS/Windows it ships with the official Python installer."
+            "On Linux install it with:     sudo apt install python3-tk\n"
+            "On macOS with Homebrew:       brew install python-tk@3.12\n"
+            "  (then recreate your venv — see README Troubleshooting)\n"
+            "On macOS with python.org:     tkinter ships with the installer.\n"
+            "On Windows:                   tkinter ships with the installer."
         )
         sys.exit(1)
     app = App()
