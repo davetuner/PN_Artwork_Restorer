@@ -204,7 +204,7 @@ class ArtworkRestorer:
 
         Returns a summary ``dict`` with keys:
         ``total``, ``matched``, ``no_backup``, ``no_artwork_in_backup``,
-        ``errors``, ``duplicate_backups``.
+        ``errors``, ``duplicate_backups``, ``duplicate_library_filenames``.
         """
         self._log_cb("Building backup index…", "info")
         backup_dict, duplicates = self.build_backup_dict()
@@ -218,6 +218,13 @@ class ArtworkRestorer:
         library_files = self.find_library_files()
         total = len(library_files)
         self._log_cb(f"Library scan: {total} FLAC file(s) found", "info")
+        library_name_counts: dict[str, int] = {}
+        for lib_path in library_files:
+            key = lib_path.name.lower()
+            library_name_counts[key] = library_name_counts.get(key, 0) + 1
+        duplicate_library_filenames = sum(
+            count - 1 for count in library_name_counts.values() if count > 1
+        )
 
         matched = 0
         no_backup = 0
@@ -271,6 +278,7 @@ class ArtworkRestorer:
             f"  Artwork restored     : {matched}\n"
             f"  No backup found      : {no_backup}\n"
             f"  Backup has no art    : {no_artwork}\n"
+            f"  Duplicate library    : {duplicate_library_filenames}\n"
             f"  Duplicate backups    : {len(duplicates)}\n"
             f"  Errors               : {errors}\n"
             f"{separator}",
@@ -282,6 +290,7 @@ class ArtworkRestorer:
             "matched": matched,
             "no_backup": no_backup,
             "no_artwork_in_backup": no_artwork,
+            "duplicate_library_filenames": duplicate_library_filenames,
             "duplicate_backups": len(duplicates),
             "errors": errors,
         }
@@ -513,6 +522,7 @@ if HAS_TKINTER:
                 f"Artwork restored     : {summary['matched']}\n"
                 f"No backup found      : {summary['no_backup']}\n"
                 f"Backup has no art    : {summary['no_artwork_in_backup']}\n"
+                f"Duplicate library    : {summary['duplicate_library_filenames']}\n"
                 f"Duplicate backups    : {summary['duplicate_backups']}\n"
                 f"Errors               : {summary['errors']}\n\n"
                 f"Full log: {_log_file()}",
