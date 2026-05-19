@@ -334,11 +334,34 @@ if HAS_TKINTER:
             )
             self.log_text.pack(fill=tk.BOTH, expand=True)
 
-            # Colour tags
-            self.log_text.tag_config("info", foreground="black")
-            self.log_text.tag_config("warning", foreground="#CC6600")
-            self.log_text.tag_config("error", foreground="red")
-            self.log_text.tag_config("debug", foreground="gray")
+            self._configure_log_colors()
+
+        def _configure_log_colors(self) -> None:
+            """Set readable log colors for both light and dark backgrounds."""
+            try:
+                bg = self.log_text.cget("background")
+                r, g, b = self.log_text.winfo_rgb(bg)
+                luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 65535.0
+            except tk.TclError:
+                luminance = 1.0  # Fallback to light theme colors.
+
+            if luminance < 0.5:
+                colors = {
+                    "info": "#E6E6E6",
+                    "warning": "#FFB347",
+                    "error": "#FF7A7A",
+                    "debug": "#B0B0B0",
+                }
+            else:
+                colors = {
+                    "info": "black",
+                    "warning": "#CC6600",
+                    "error": "red",
+                    "debug": "gray",
+                }
+
+            for level, color in colors.items():
+                self.log_text.tag_config(level, foreground=color)
 
         # ----------------------------------------------------------------
         # Event handlers
