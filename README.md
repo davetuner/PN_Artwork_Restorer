@@ -348,6 +348,7 @@ python pn_artwork_restorer.py
 
 2. **PN Backup Folder** — Click **Browse…** and select the flat folder where
    Platinum Notes saved its backup copies of the original files.
+   The app remembers your last selected folders and reloads them at startup.
 
 3. **Dry Run** (default: ON) — Leave this ticked the first time you run the
    tool. It will show you exactly what it *would* do without modifying any
@@ -416,6 +417,7 @@ PN_Artwork_Restorer/
 | Feature | Detail |
 |---|---|
 | Simple Tkinter GUI | No command line required |
+| Remembers last folders | Saves your library and backup paths between app restarts |
 | Dry Run mode | Default ON — preview before any file is changed |
 | Live progress bar | Updates per file with percentage |
 | Detailed log window | Colour-coded by severity (info / warning / error) |

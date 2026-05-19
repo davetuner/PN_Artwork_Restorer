@@ -11,7 +11,7 @@ import pytest
 from pathlib import Path
 from mutagen.flac import FLAC
 
-from pn_artwork_restorer import ArtworkRestorer
+from pn_artwork_restorer import ArtworkRestorer, _load_saved_paths, _save_saved_paths
 from tests.conftest import make_flac, picture_count, FAKE_PNG_DATA
 
 
@@ -398,3 +398,29 @@ class TestRun:
         assert summary["duplicate_backups"] == 1
         combined = "\n".join(msg for _, msg in logs)
         assert "Duplicate backups    : 1" in combined
+
+
+class TestConfigPersistence:
+    def test_load_saved_paths_defaults_when_file_missing(self, tmp_path):
+        config_path = tmp_path / "missing_config.json"
+        paths = _load_saved_paths(config_path=config_path)
+        assert paths == {"library_root": "", "backup_folder": ""}
+
+    def test_load_saved_paths_invalid_json_falls_back(self, tmp_path):
+        config_path = tmp_path / "bad_config.json"
+        config_path.write_text("{not valid json", encoding="utf-8")
+        paths = _load_saved_paths(config_path=config_path)
+        assert paths == {"library_root": "", "backup_folder": ""}
+
+    def test_save_and_load_saved_paths_round_trip(self, tmp_path):
+        config_path = tmp_path / "subdir" / "app_config.json"
+        _save_saved_paths(
+            library_root="/music/library",
+            backup_folder="/music/backup",
+            config_path=config_path,
+        )
+        paths = _load_saved_paths(config_path=config_path)
+        assert paths == {
+            "library_root": "/music/library",
+            "backup_folder": "/music/backup",
+        }

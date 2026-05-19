@@ -17,6 +17,7 @@ Requires:
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import sys
@@ -45,6 +46,47 @@ except ImportError:  # pragma: no cover
 # Module-level logger (handlers added only when running as __main__)
 # ---------------------------------------------------------------------------
 logger = logging.getLogger(__name__)
+CONFIG_FILENAME = ".pn_artwork_restorer_config.json"
+
+
+def _config_file() -> Path:
+    """Return the user config file path for GUI settings."""
+    return Path.home() / CONFIG_FILENAME
+
+
+def _load_saved_paths(config_path: Path | None = None) -> dict[str, str]:
+    """Load last-used folders from config, falling back to empty values."""
+    defaults = {"library_root": "", "backup_folder": ""}
+    path = config_path or _config_file()
+
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, OSError, json.JSONDecodeError):
+        return defaults
+
+    if not isinstance(payload, dict):
+        return defaults
+
+    library = payload.get("library_root", "")
+    backup = payload.get("backup_folder", "")
+    return {
+        "library_root": library if isinstance(library, str) else "",
+        "backup_folder": backup if isinstance(backup, str) else "",
+    }
+
+
+def _save_saved_paths(
+    library_root: str, backup_folder: str, config_path: Path | None = None
+) -> None:
+    """Persist last-used folders for the next app launch."""
+    path = config_path or _config_file()
+    payload = {"library_root": library_root, "backup_folder": backup_folder}
+
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    except OSError as exc:
+        logger.warning("Could not save config file %s: %s", path, exc)
 
 # ---------------------------------------------------------------------------
 # Core logic — no GUI dependency whatsoever
@@ -260,6 +302,7 @@ if HAS_TKINTER:
             self.resizable(True, True)
             self.minsize(720, 560)
             self._build_ui()
+            self._load_saved_paths_into_ui()
 
         # ----------------------------------------------------------------
         # UI construction
@@ -387,6 +430,18 @@ if HAS_TKINTER:
             folder = filedialog.askdirectory()
             if folder:
                 var.set(folder)
+                self._save_current_paths()
+
+        def _load_saved_paths_into_ui(self) -> None:
+            saved = _load_saved_paths()
+            self.var_library.set(saved.get("library_root", ""))
+            self.var_backup.set(saved.get("backup_folder", ""))
+
+        def _save_current_paths(self) -> None:
+            _save_saved_paths(
+                library_root=self.var_library.get().strip(),
+                backup_folder=self.var_backup.get().strip(),
+            )
 
         def _clear_log(self) -> None:
             self.log_text.config(state=tk.NORMAL)
@@ -422,6 +477,7 @@ if HAS_TKINTER:
                 )
                 return
 
+            self._save_current_paths()
             self.btn_start.config(state=tk.DISABLED)
             self._clear_log()
             self._append_log("Starting…\n", "info")
