@@ -16,7 +16,8 @@ with Mixed In Key 11 Pro (FLAC files on macOS and Windows)**
 7. [Project Structure](#project-structure)
 8. [Features](#features)
 9. [Technical Notes](#technical-notes)
-10. [License](#license)
+10. [Troubleshooting](#troubleshooting)
+11. [License](#license)
 
 ---
 
@@ -62,19 +63,53 @@ Follow every step exactly. Each command is shown in a grey box — copy and past
 it into **Terminal** (you can find Terminal in Applications → Utilities →
 Terminal, or press **⌘ Space** and type `terminal`).
 
-### Step 1 — Check that Python 3.10 or newer is installed
+### Step 1 — Install Python 3.10 or newer via Homebrew (recommended on macOS)
 
-```
-python3 --version
-```
+> **Why Homebrew and not python.org?**
+> The official Python.org installer bundles its own copy of Tcl/Tk (the GUI
+> framework). On some macOS versions that copy of Tcl/Tk performs a hard
+> build-number check and crashes with a message like
+> `macOS 15 (1507) or later required, have instead 15 (1506)` — before any of
+> our code has a chance to run. Homebrew's Python links against Homebrew's own
+> Tcl/Tk which does **not** have this check, making it the most reliable choice
+> on macOS.
 
-You should see something like `Python 3.12.3`. If you see an error, or a
-version below 3.10, install Python from the official website:
+**Option A — Homebrew (recommended)**
+
+1. If Homebrew is not already installed, paste this into Terminal and press
+   **Return**:
+   ```
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+   ```
+   Follow the on-screen prompts (it may ask for your Mac login password).  
+   *(You can skip this step if you already have Homebrew — test with `brew --version`.)*
+
+2. Install Python:
+   ```
+   brew install python@3.12
+   ```
+
+3. Verify:
+   ```
+   /opt/homebrew/bin/python3 --version
+   ```
+   You should see `Python 3.12.x`.  
+   > **Apple Silicon Mac (M1/M2/M3/M4)?** Homebrew lives at `/opt/homebrew`.  
+   > **Intel Mac?** Homebrew lives at `/usr/local` — use
+   > `/usr/local/bin/python3 --version` instead.
+
+**Option B — python.org installer (not recommended on macOS 15)**
+
+If you cannot use Homebrew:
 
 1. Go to **https://www.python.org/downloads/**
-2. Click the big **"Download Python 3.x.x"** button.
+2. Click the **"Download Python 3.x.x"** button (choose 3.12.x, *not* 3.13.x — 3.13 bundles the version of Tcl/Tk most likely to trigger the crash).
 3. Open the downloaded `.pkg` file and follow the installer.
-4. Open a new Terminal window and run `python3 --version` again.
+4. Open a new Terminal window and run `python3 --version`.
+
+> If you see the `macOS 15 (1507) or later required` crash even after
+> installing from python.org, switch to Option A (Homebrew) or see the
+> [Troubleshooting](#troubleshooting) section.
 
 ---
 
@@ -107,6 +142,19 @@ cd PN_Artwork_Restorer
 A virtual environment keeps the tool's dependencies isolated from the rest of
 your system so nothing ever conflicts.
 
+**If you installed Python via Homebrew (recommended):**
+
+Apple Silicon Mac:
+```
+/opt/homebrew/bin/python3 -m venv .venv
+```
+
+Intel Mac:
+```
+/usr/local/bin/python3 -m venv .venv
+```
+
+**If you installed Python via python.org:**
 ```
 python3 -m venv .venv
 ```
@@ -392,6 +440,58 @@ PN_Artwork_Restorer/
 - **Logging**: all actions are written to `logs/PN_Artwork_Restorer.log`
   alongside the GUI log window. The log file is appended on each run so you
   have a complete history.
+
+---
+
+## Troubleshooting
+
+### `macOS 15 (NNNN) or later required, have instead 15 (MMMM)` — app crashes immediately on macOS
+
+**Cause:** The official Python.org installer bundles its own copy of Tcl/Tk
+(the GUI framework used by `tkinter`). That bundled Tcl/Tk contains a hard
+macOS build-number check written in C. When the check fails it calls `abort()`
+— a hard crash that happens *before* any Python code runs, so no error
+handling in our script can prevent it.
+
+**Fix — switch to Homebrew Python** (one-time setup, ~5 minutes):
+
+1. Install Homebrew if you haven't already:
+   ```
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+   ```
+
+2. Install Python via Homebrew:
+   ```
+   brew install python@3.12
+   ```
+
+3. Delete your old virtual environment and recreate it with Homebrew's Python:
+
+   Apple Silicon Mac (M1/M2/M3/M4):
+   ```
+   cd ~/path/to/PN_Artwork_Restorer
+   rm -rf .venv
+   /opt/homebrew/bin/python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+   Intel Mac:
+   ```
+   cd ~/path/to/PN_Artwork_Restorer
+   rm -rf .venv
+   /usr/local/bin/python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+4. Launch the app:
+   ```
+   python3 pn_artwork_restorer.py
+   ```
+
+The crash will not occur again because Homebrew's Tcl/Tk does not include the
+build-number check.
 
 ---
 
