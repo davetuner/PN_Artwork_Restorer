@@ -409,23 +409,37 @@ class TestConfigPersistence:
     def test_load_saved_paths_defaults_when_file_missing(self, tmp_path):
         config_path = tmp_path / "missing_config.json"
         paths = _load_saved_paths(config_path=config_path)
-        assert paths == {"library_root": "", "backup_folder": ""}
+        assert paths == {
+            "library_root": "",
+            "backup_folder": "",
+            "mik_export_root": "",
+            "mik_library_root": "",
+        }
 
     def test_load_saved_paths_invalid_json_falls_back(self, tmp_path):
         config_path = tmp_path / "bad_config.json"
         config_path.write_text("{not valid json", encoding="utf-8")
         paths = _load_saved_paths(config_path=config_path)
-        assert paths == {"library_root": "", "backup_folder": ""}
+        assert paths == {
+            "library_root": "",
+            "backup_folder": "",
+            "mik_export_root": "",
+            "mik_library_root": "",
+        }
 
     def test_save_and_load_saved_paths_round_trip(self, tmp_path):
         config_path = tmp_path / "subdir" / "app_config.json"
         _save_saved_paths(
             library_root="/music/library",
             backup_folder="/music/backup",
+            mik_export_root="/music/mik_export",
+            mik_library_root="/music/library",
             config_path=config_path,
         )
         paths = _load_saved_paths(config_path=config_path)
         assert paths == {
             "library_root": "/music/library",
             "backup_folder": "/music/backup",
+            "mik_export_root": "/music/mik_export",
+            "mik_library_root": "/music/library",
         }
